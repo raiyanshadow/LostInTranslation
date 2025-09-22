@@ -1,6 +1,8 @@
 package translation;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.*;
 
 
@@ -13,40 +15,58 @@ public class GUI {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            JSONTranslator translator = new JSONTranslator();
+            LanguageCodeConverter langConverter = new LanguageCodeConverter();
+            CountryCodeConverter countryConverter = new CountryCodeConverter();
+
+            JPanel resultPanel = new JPanel();
+            JLabel resultLabelText = new JLabel("Translation:");
+            resultPanel.add(resultLabelText);
+            JLabel resultLabel = new JLabel("\t\t\t\t\t\t\t");
+            resultPanel.add(resultLabel);
+
             JPanel countryPanel = new JPanel();
-            JTextField countryField = new JTextField(10);
-            countryField.setText("can");
-            countryField.setEditable(false); // we only support the "can" country code for now
-            countryPanel.add(new JLabel("Country:"));
-            countryPanel.add(countryField);
+            DefaultListModel<String> countryListModel = new DefaultListModel<>();
+            for (String country: translator.getCountryCodes()) {
+                countryListModel.addElement(countryConverter.fromCountryCode(country));
+            }
+            JList <String> countryList = new JList<>(countryListModel);
+            countryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            JScrollPane countryScrollPane = new JScrollPane(countryList);
+            countryPanel.add(countryScrollPane);
 
             JPanel languagePanel = new JPanel();
-            JTextField languageField = new JTextField(10);
-            languagePanel.add(new JLabel("Language:"));
-            languagePanel.add(languageField);
+            String[] languages = new String[35];
+            for (int i = 0; i < languages.length; i++) {
+                String languageCode = translator.getLanguageCodes().get(i);
+                String language = langConverter.fromLanguageCode(languageCode);
+                languages[i] = language;
+            }
+            JComboBox<String> languageComboBox = new JComboBox<>(languages);
+            languagePanel.add(languageComboBox);
 
-            JPanel buttonPanel = new JPanel();
-            JButton submit = new JButton("Submit");
-            buttonPanel.add(submit);
+            countryList.addListSelectionListener(new ListSelectionListener() {
+                public void valueChanged(ListSelectionEvent e) {
+                    if (!e.getValueIsAdjusting()) {
+                        if(countryList.getSelectedIndex() != -1) {
+                            String selectedCountry = countryList.getSelectedValue();
+                            String selectedLanguage = (String) languageComboBox.getSelectedItem();
+                            String result = translator.translate(countryConverter.fromCountry(selectedCountry), langConverter.fromLanguage(selectedLanguage));
+                            if (result == null) {
+                                result = "no translation found!";
+                            }
+                            resultLabel.setText(result);
+                        }
+                    }
+                }
+            });
 
-            JLabel resultLabelText = new JLabel("Translation:");
-            buttonPanel.add(resultLabelText);
-            JLabel resultLabel = new JLabel("\t\t\t\t\t\t\t");
-            buttonPanel.add(resultLabel);
-
-
-            // adding listener for when the user clicks the submit button
-            submit.addActionListener(new ActionListener() {
+            languageComboBox.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    String language = languageField.getText();
-                    String country = countryField.getText();
-
-                    // for now, just using our simple translator, but
-                    // we'll need to use the real JSON version later.
-                    Translator translator = new CanadaTranslator();
-
-                    String result = translator.translate(country, language);
+                    String selectedLanguage = (String) languageComboBox.getSelectedItem();
+                    String selectedCountry = countryList.getSelectedValue();
+                    String result = translator.translate(countryConverter.fromCountry(selectedCountry), langConverter.fromLanguage(selectedLanguage));
                     if (result == null) {
                         result = "no translation found!";
                     }
@@ -58,9 +78,9 @@ public class GUI {
 
             JPanel mainPanel = new JPanel();
             mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-            mainPanel.add(countryPanel);
             mainPanel.add(languagePanel);
-            mainPanel.add(buttonPanel);
+            mainPanel.add(resultPanel);
+            mainPanel.add(countryPanel);
 
             JFrame frame = new JFrame("Country Name Translator");
             frame.setContentPane(mainPanel);
