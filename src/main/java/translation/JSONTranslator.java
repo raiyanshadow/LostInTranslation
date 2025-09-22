@@ -57,10 +57,10 @@ public class JSONTranslator implements Translator {
                 for (String key : countryData.keySet()) {
                     if (!key.equals("id") && !key.equals("alpha2") && !key.equals("alpha3")) {
                         String languageCode = key;
-                        if (!languageCodes.contains(languageCode.toLowerCase())) {
+                        if (!languageCodes.contains(languageCode)) {
                             languageCodes.add(languageCode.toLowerCase());
                         }
-                        translations.put(languageCode, countryCode);
+                        translations.put(countryCode.toLowerCase() + "-" + languageCode.toLowerCase(), countryData.getString(languageCode));
                         if (!languages.contains(languageCode)) {
                             languages.add(languageCode);
                         }
@@ -85,10 +85,10 @@ public class JSONTranslator implements Translator {
 
     @Override
     public String translate(String countryCode, String languageCode) {
-        if (countryCode == null || languageCode == null){
-            return null;
-        }
-        String key = countryCode + "-" + languageCode;
+//        if (countryCode == null || languageCode == null){
+//            return null;
+//        }
+        String key = countryCode.toLowerCase() + "-" + languageCode.toLowerCase();
         return translations.get(key);
     }
 }
