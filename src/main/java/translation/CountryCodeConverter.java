@@ -42,7 +42,10 @@ public class CountryCodeConverter {
                 String line = iterator.next();
                 String[] parts = line.split("\t");
                 // TODO Task B: use parts to populate the instance variables
+                countryCodeToCountry.put(parts[0], parts[2]);
+                countryToCountryCode.put(parts[0], parts[3]);
             }
+
         }
         catch (IOException | URISyntaxException ex) {
             throw new RuntimeException(ex);
